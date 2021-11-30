@@ -47,7 +47,7 @@ func getRemote() (string, error) {
 }
 
 func deleteBranch(branch string) {
-	cmd := exec.Command("git", "branch", "-d", branch)
+	cmd := exec.Command("git", "branch", "-D", branch)
 	cmd.Run()
 }
 
@@ -56,6 +56,9 @@ func main() {
 	var (
 		noop = func(context.Context, []string) error { return flag.ErrHelp }
 	)
+
+	globalFlags := flag.NewFlagSet("gitpurge", flag.ExitOnError)
+	verboseFlag := globalFlags.Bool("verbose", false, "Verbose logging")
 
 	list := &ffcli.Command{
 		Name:       "list",
@@ -109,6 +112,7 @@ func main() {
 		ShortHelp:  "delete local branches with no remote",
 		LongHelp:   "Will delete all branches locally that do have a remote branch",
 		Exec: func(ctx context.Context, args []string) error {
+
 			remote, err := getRemote()
 			if err != nil {
 				return err
@@ -122,9 +126,17 @@ func main() {
 
 			branches := parseBranches(result)
 			for _, branch := range branches {
+
 				remoteExists, err := hasRemote(remote, branch)
 				if err == nil && !remoteExists {
+					if *verboseFlag {
+						fmt.Printf("Parsing Branch: %v, remoteExists: %v, deleting \n", branch, remoteExists)
+					}
 					deleteBranch(branch)
+				} else {
+					if *verboseFlag {
+						fmt.Printf("Parsing Branch: %v, remoteExists: %v, not deleting \n", branch, remoteExists)
+					}
 				}
 			}
 
@@ -136,6 +148,7 @@ func main() {
 		ShortUsage:  "gitpurge [global flags] <subcommand> [subcommand flags] [subcommand args]",
 		ShortHelp:   "tool to help cleanup local branches",
 		Subcommands: []*ffcli.Command{list, purge},
+		FlagSet:     globalFlags,
 		Exec:        noop,
 	}
 
