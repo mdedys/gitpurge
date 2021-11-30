@@ -5,8 +5,12 @@ If the branch does not have a remote it will detele it when running `gitpurge pu
 
 ## Building
 
-`go run -o bin/gitpurge .`
+`go build -o bin/gitpurge .`
 
 ## Running 
 
 `bin/purge [global flags] <subcommand> [subcommand flags] [subcommand args]`
+
+## TODOs
+
+- [ ] Speed up fetching remote status
